@@ -1,11 +1,16 @@
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.regex.Pattern;
 
 public class Server {
@@ -16,7 +21,10 @@ public class Server {
 		System.out.println("Server start!");
 
 		int clientNumber = 0;
-
+		
+		String serverAddress = "127.0.0.1";
+		int serverPort = 5050;
+		/*
 		String serverAddress = null;
 		while (true) {
 			System.out.print("Enter the IP address to listen on: ");
@@ -44,7 +52,7 @@ public class Server {
 			} else {
 				break;
 			}
-		}
+		}*/
 
 		listener = new ServerSocket();
 		listener.setReuseAddress(true);
@@ -52,7 +60,7 @@ public class Server {
 
 		listener.bind(new InetSocketAddress(serverIP, serverPort));
 
-		System.out.format("The server is running on %s:%d", serverAddress, serverPort);
+		System.out.format("The server is running on %s:%d\n", serverAddress, serverPort);
 
 		try {
 			while (true) {
@@ -76,19 +84,33 @@ public class Server {
 	private static class ClientHandler extends Thread {
 		private Socket socket;
 		private int clientNumber;
+		private Path currentPath;
 
 		public ClientHandler(Socket socket, int clientNumber) {
 			this.socket = socket;
 			this.clientNumber = clientNumber;
+			this.currentPath = Paths.get("").toAbsolutePath();
+			System.out.println(this.currentPath);
 
 			System.out.println("New connection with client #" + clientNumber + " at " + socket);
 		}
 
 		public void run() {
 			try {
-				DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-
-				out.writeUTF("Hello from server - you are client #" + clientNumber);
+				PrintStream out = new PrintStream(socket.getOutputStream());
+				BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				
+				//out.writeUTF("Hello from server - you are client #" + clientNumber);
+				
+				String inputCommand = null;
+			    while ((inputCommand = in.readLine()) != null) {
+					System.out.println("Got command: " + inputCommand);
+				
+					if (inputCommand.equals("exit"))
+						break;
+					
+					handleCommand(inputCommand, out);
+				}
 
 			} catch (IOException e) {
 				System.out.println("Error handling client #" + clientNumber + ": " + e);
@@ -101,6 +123,50 @@ public class Server {
 
 				System.out.println("Connection with client # " + clientNumber + " closed");
 			}
+		}
+		
+		public void handleCommand(String command, PrintStream outputStream) {
+			if (command.equals("ls")) {
+				File folder = new File(this.currentPath.toString());
+				File[] listOfFiles = folder.listFiles();
+
+				for (int i = 0; i < listOfFiles.length; i++) {
+				  if (listOfFiles[i].isFile()) {
+				    outputStream.println("[File] " + listOfFiles[i].getName());
+				  } else if (listOfFiles[i].isDirectory()) {
+					outputStream.println("[Folder] " + listOfFiles[i].getName());
+				  }
+				}
+				
+				outputStream.println("---end---");
+			} else if (command.contains("cd")) {
+				String[] parts = command.split(" ", 2);
+				String directoryStr = parts[1];
+				
+				if (directoryStr.equals("..")) {
+					Path parentDirectory = this.currentPath.getParent();
+					if (parentDirectory != null)
+						this.currentPath = parentDirectory;
+				} else {
+					Path directory = Paths.get(directoryStr);
+					Path combinedDirectory = this.currentPath.resolve(directory);
+					if (combinedDirectory.toFile().isDirectory())
+						this.currentPath = combinedDirectory;
+					else
+						outputStream.println("\"" + combinedDirectory + "\"" + " is not a valid folder.");
+				}
+				
+				System.out.println(this.currentPath);
+
+				outputStream.println("---end---");
+			} else if (command.equals("mkdir")) {
+				
+			} else if (command.contains("upload")) {
+				
+			} else if (command.contains("download")) {
+				
+			}
+
 		}
 	}
 

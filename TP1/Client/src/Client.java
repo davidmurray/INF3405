@@ -1,6 +1,7 @@
 import java.io.DataInputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.Socket;
 import java.util.regex.Pattern;
 
@@ -11,12 +12,16 @@ public class Client {
 	public static void main(String[] args) throws Exception {
 		System.out.println("Client start!");
 
+		BufferedReader sysReader = new BufferedReader(new InputStreamReader(System.in));
+
+		String serverAddr = "127.0.0.1";
+		int port = 5050;
+		/*
 		String serverAddr = null;
 
 		while (true) {
 			System.out.print("Enter the IP address of the server: ");
-			BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-			serverAddr = reader.readLine();
+			serverAddr = sysReader.readLine();
 
 			if (!isValidIPv4Address(serverAddr)) {
 				System.out.println("The IP address you have entered is not a valid IPv4 address. Please try again. ");
@@ -29,8 +34,7 @@ public class Client {
 		int port = 0;
 		while (true) {
 			System.out.print("Enter the port to connect to: ");
-			BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-			port = Integer.parseInt(reader.readLine());
+			port = Integer.parseInt(sysReader.readLine());
 
 			if (!isValidPort(port)) {
 				System.out.println(
@@ -39,15 +43,33 @@ public class Client {
 			} else {
 				break;
 			}
-		}
+		}*/
 
+		System.out.format("Connecting to server on %s:%d%n", serverAddr, port);
 		socket = new Socket(serverAddr, port);
-		System.out.format("The server is running on %s:%d", serverAddr, port);
+		
+	    // Create input and output streams to read from and write to the server
+        PrintStream out = new PrintStream(socket.getOutputStream());
+		BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-		DataInputStream in = new DataInputStream(socket.getInputStream());
+		String command = null;
+		while ((command = sysReader.readLine()) != null) {
+			// Send the command to the server.
+			out.println(command);
 
-		String helloMessage = in.readUTF();
-		System.out.println(helloMessage);
+			if (command.equals("exit"))
+				break;
+			
+			// Read the server's response.
+			String response = null;
+			while ((response = in.readLine()) != null) {
+				if (response.equals("---end---"))
+					break;
+				System.out.println(response);
+			}
+		}
+		
+		System.out.println("Vous avez été déconnecté avec succès."); // TODO: check exceptions
 
 		socket.close();
 	}
