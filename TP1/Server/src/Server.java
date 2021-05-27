@@ -128,17 +128,15 @@ public class Server {
 		public void handleCommand(String command, PrintStream outputStream) {
 			if (command.equals("ls")) {
 				File folder = new File(this.currentPath.toString());
-				File[] listOfFiles = folder.listFiles();
+				File[] files = folder.listFiles();
 
-				for (int i = 0; i < listOfFiles.length; i++) {
-				  if (listOfFiles[i].isFile()) {
-				    outputStream.println("[File] " + listOfFiles[i].getName());
-				  } else if (listOfFiles[i].isDirectory()) {
-					outputStream.println("[Folder] " + listOfFiles[i].getName());
+				for (int i = 0; i < files.length; i++) {
+				  if (files[i].isFile()) {
+				    outputStream.println("[File] " + files[i].getName());
+				  } else if (files[i].isDirectory()) {
+					outputStream.println("[Folder] " + files[i].getName());
 				  }
 				}
-				
-				outputStream.println("---end---");
 			} else if (command.contains("cd")) {
 				String[] parts = command.split(" ", 2);
 				String directoryStr = parts[1];
@@ -149,24 +147,37 @@ public class Server {
 						this.currentPath = parentDirectory;
 				} else {
 					Path directory = Paths.get(directoryStr);
-					Path combinedDirectory = this.currentPath.resolve(directory);
-					if (combinedDirectory.toFile().isDirectory())
-						this.currentPath = combinedDirectory;
+					Path combinedPath = this.currentPath.resolve(directory);
+					if (combinedPath.toFile().isDirectory())
+						this.currentPath = combinedPath;
 					else
-						outputStream.println("\"" + combinedDirectory + "\"" + " is not a valid folder.");
+						outputStream.println("\"" + combinedPath + "\"" + " is not a valid folder.");
 				}
 				
-				System.out.println(this.currentPath);
-
-				outputStream.println("---end---");
-			} else if (command.equals("mkdir")) {
+				outputStream.println("Vous êtes dans le dossier " + directoryStr + ".");
 				
+			} else if (command.contains("mkdir")) {
+				String[] parts = command.split(" ", 2);
+				String directoryStr = parts[1];
+				if (!directoryStr.equals("..") && !directoryStr.equals(".")) {
+					Path directory = Paths.get(directoryStr);
+					Path combinedPath = this.currentPath.resolve(directory);
+					
+					File file = combinedPath.toFile();
+					if (file.isDirectory()) {
+						outputStream.println("Le dossier " + directoryStr + " existe déjà.");
+					} else {
+						file.mkdirs();
+						outputStream.println("Le dossier " + directoryStr + " a été créé.");
+					}
+				}
 			} else if (command.contains("upload")) {
 				
 			} else if (command.contains("download")) {
 				
 			}
-
+			
+			outputStream.println("---end---");
 		}
 	}
 
