@@ -1,5 +1,6 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -63,6 +64,10 @@ public class Client {
 				String fileName = command.split(" ", 2)[1];
 				sendFileWithName(fileName, out);
 				continue;
+			} else if (command.startsWith("download")) {
+				String fileName = command.split(" ", 2)[1];
+				receiveFileWithName(fileName, in, out);
+				continue;
 			}
 			
 			// Send the command to the server.
@@ -85,9 +90,7 @@ public class Client {
 		socket.close();
 	}
 	
-	private static void sendFileWithName(String fileName, DataOutputStream outputStream) throws IOException {
-		System.out.println(fileName);
-		
+	private static void sendFileWithName(String fileName, DataOutputStream outputStream) throws IOException {		
 		Path filePath = Paths.get(fileName);
 		if (Files.exists(filePath) == false) {
 			System.out.println("The file with name " + fileName + " does not exist.");
@@ -110,8 +113,37 @@ public class Client {
 		
 		// Send the data to the server.
 		outputStream.write(data);
-		
 		outputStream.flush();
+	}
+
+	private static void receiveFileWithName(String fileName, DataInputStream inputStream, DataOutputStream outputStream) throws IOException {
+		System.out.println(fileName);
+		
+		// Send the request to the server
+		outputStream.writeUTF("download");
+		outputStream.writeUTF(fileName);
+		
+		// Read the file size received from the server
+		byte[] fileSizeArray = new byte[4];
+		inputStream.read(fileSizeArray);
+
+		// Convert to an integer
+		int fileSize = ByteBuffer.wrap(fileSizeArray).asIntBuffer().get();
+
+		// Create a FileOutputStream and read chunks of 8192 bytes from the socket.
+		Path filePath = Paths.get(fileName);
+		FileOutputStream fos = new FileOutputStream(filePath.toFile());
+
+		byte[] buffer = new byte[8192];
+		int bytesToRead = fileSize;
+		while (bytesToRead > 0) {
+			int read = inputStream.read(buffer);
+			fos.write(buffer, 0, read);
+			bytesToRead -= read;
+		}
+
+		fos.flush();
+		fos.close();
 	}
 
 	private static boolean isValidIPv4Address(String IP) {

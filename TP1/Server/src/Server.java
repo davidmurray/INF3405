@@ -8,6 +8,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.regex.Pattern;
@@ -184,7 +185,25 @@ public class Server {
 				fos.flush();
 				fos.close();
 			} else if (command.startsWith("download")) {
+				String fileName = inputStream.readUTF();
+				Path filePath = Paths.get(fileName);
+				if (Files.exists(filePath) == false) {
+					System.out.println("The file with name " + fileName + " does not exist.");
+					return;
+				}
 
+				// Load the file in memory
+				byte[] data = Files.readAllBytes(filePath);
+				
+				// 4 bytes which represents the file size.
+				byte[] fileSize = ByteBuffer.allocate(4).putInt(data.length).array();
+				
+				// Send the data's size
+				outputStream.write(fileSize);
+				
+				// Send the data to the server.
+				outputStream.write(data);				
+				outputStream.flush();
 			}
 
 			outputStream.writeUTF("---end---");
