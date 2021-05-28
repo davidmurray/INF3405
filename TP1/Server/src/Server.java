@@ -144,6 +144,8 @@ public class Server {
 					Path parentDirectory = this.currentPath.getParent();
 					if (parentDirectory != null)
 						newFolder = parentDirectory;
+				} else if (directoryStr.equals(".")) {
+					// Do nothing
 				} else { // Otherwise, use .resolve to move to a deeper folder.
 					Path directory = Paths.get(directoryStr);
 					newFolder = this.currentPath.resolve(directory);
