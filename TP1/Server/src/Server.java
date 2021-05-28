@@ -9,7 +9,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -178,11 +177,7 @@ public class Server {
 				System.out.println("Receiving file named : " + fileName);
 
 				// Read the file size
-				byte[] fileSizeArray = new byte[4];
-				inputStream.read(fileSizeArray);
-
-				// Convert to an integer
-				int fileSize = ByteBuffer.wrap(fileSizeArray).asIntBuffer().get();
+				int fileSize = inputStream.readInt();
 
 				// Create a FileOutputStream and read chunks of 8192 bytes from the socket.
 				Path filePath = this.currentPath.resolve(Paths.get(fileName));
@@ -215,16 +210,13 @@ public class Server {
 
 				// Load the file in memory
 				byte[] data = Files.readAllBytes(absoluteFilePath);
-				
-				// 4 bytes which represents the file size.
-				byte[] fileSize = ByteBuffer.allocate(4).putInt(data.length).array();
-				
+
 				// Send the data's size
-				outputStream.write(fileSize);
+				outputStream.writeInt(data.length);
 				
 				// Send the data to the server.
 				outputStream.write(data);				
-				//outputStream.flush();
+				outputStream.flush();
 				
 				outputStream.writeUTF("Le fichier " + fileName + " a bien été téléchargé.");
 			}

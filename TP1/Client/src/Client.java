@@ -98,16 +98,13 @@ public class Client {
 		// Load the file in memory
 		byte[] data = Files.readAllBytes(filePath);
 		
-		// 4 bytes which represents the file size.
-		byte[] fileSize = ByteBuffer.allocate(4).putInt(data.length).array();
-		
 		outputStream.writeUTF("upload");
 		
 		// Send the file name
 		outputStream.writeUTF(fileName);
 		
-		// Send the data's size
-		outputStream.write(fileSize);
+		// Send the data's size as a 4-byte integer.
+		outputStream.writeInt(data.length);
 		
 		// Send the data to the server.
 		outputStream.write(data);
@@ -144,7 +141,6 @@ public class Client {
 
 		fos.flush();
 		fos.close();
-		System.out.println("Finished receviing feverything");
 	}
 
 	private static boolean isValidIPv4Address(String IP) {
