@@ -1,8 +1,10 @@
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -22,27 +24,34 @@ public class Server {
 
 		int clientNumber = 0;
 
-		String serverAddress = "127.0.0.1";
-		int serverPort = 5050;
-		/*
-		 * String serverAddress = null; while (true) {
-		 * System.out.print("Enter the IP address to listen on: "); BufferedReader
-		 * reader = new BufferedReader(new InputStreamReader(System.in)); serverAddress
-		 * = reader.readLine();
-		 * 
-		 * if (!isValidIPv4Address(serverAddress)) { System.out.
-		 * println("The IP address you have entered is not a valid IPv4 address. Please try again. "
-		 * ); continue; } else { break; } }
-		 * 
-		 * int serverPort = 0; while (true) {
-		 * System.out.print("Enter the port number to listen on: "); BufferedReader
-		 * reader = new BufferedReader(new InputStreamReader(System.in)); serverPort =
-		 * Integer.parseInt(reader.readLine());
-		 * 
-		 * if (!isValidPort(serverPort)) { System.out.println(
-		 * "The port number you have entered is not a valid (must be between 5000 and 5050). Please try again. "
-		 * ); continue; } else { break; } }
-		 */
+		String serverAddress = null;
+		while (true) {
+			System.out.print("Enter the IP address to listen on: ");
+			BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+			serverAddress = reader.readLine();
+
+			if (!isValidIPv4Address(serverAddress)) {
+				System.out.println("The IP address you have entered is not a valid IPv4 address. Please try again. ");
+				continue;
+			} else {
+				break;
+			}
+		}
+
+		int serverPort = 0;
+		while (true) {
+			System.out.print("Enter the port number to listen on: ");
+			BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+			serverPort = Integer.parseInt(reader.readLine());
+
+			if (!isValidPort(serverPort)) {
+				System.out.println(
+						"The port number you have entered is not a valid (must be between 5000 and 5050). Please try again. ");
+				continue;
+			} else {
+				break;
+			}
+		}
 
 		listener = new ServerSocket();
 		listener.setReuseAddress(true);
@@ -186,6 +195,8 @@ public class Server {
 
 				fos.flush();
 				fos.close();
+				
+				outputStream.writeUTF("Le fichier " + fileName + " a bien été téléversé.");
 			} else if (command.startsWith("download")) {
 				String fileName = inputStream.readUTF();
 				Path filePath = Paths.get(fileName);
@@ -208,6 +219,8 @@ public class Server {
 				// Send the data to the server.
 				outputStream.write(data);				
 				outputStream.flush();
+				
+				outputStream.writeUTF("Le fichier " + fileName + " a bien été téléchargé.");
 			}
 
 			// Send a marker to indicate the end of a message.

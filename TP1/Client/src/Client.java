@@ -18,9 +18,6 @@ public class Client {
 	public static void main(String[] args) throws Exception {
 		BufferedReader sysReader = new BufferedReader(new InputStreamReader(System.in));
 
-		String serverAddr = "127.0.0.1";
-		int port = 5050;
-		/*
 		String serverAddr = null;
 
 		while (true) {
@@ -47,10 +44,13 @@ public class Client {
 			} else {
 				break;
 			}
-		}*/
+		}
 
-		System.out.format("Connecting to server on %s:%d%n", serverAddr, port);
+		System.out.format("Connecting to server on %s:%d...", serverAddr, port);
 		socket = new Socket(serverAddr, port);
+		
+		while (socket.isConnected() == false) { ;; }
+		System.out.println("connected!");
 		
 	    // Create input and output streams to read from and write to the server
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
