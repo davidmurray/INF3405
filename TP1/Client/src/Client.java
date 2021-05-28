@@ -61,19 +61,18 @@ public class Client {
 			// The "upload" and "download" commands are special so we handle them differently.
 			if (command.startsWith("upload")) {
 				String fileName = command.split(" ", 2)[1];
-				sendFileWithName(fileName, out);
-				continue;
+				if (sendFileWithName(fileName, out) == false)
+					continue;
 			} else if (command.startsWith("download")) {
 				String fileName = command.split(" ", 2)[1];
 				receiveFileWithName(fileName, in, out);
-				continue;
-			}
-			
-			// Send the command to the server.
-			out.writeUTF(command);
+			} else {
+				// Send the command to the server.
+				out.writeUTF(command);
 
-			if (command.equals("exit"))
-				break;
+				if (command.equals("exit"))
+					break;				
+			}
 			
 			// Read the server's response until we see "---end---".
 			String response = null;
@@ -88,11 +87,12 @@ public class Client {
 		System.out.println("Vous avez été déconnecté avec succès."); // TODO: check exceptions
 	}
 	
-	private static void sendFileWithName(String fileName, DataOutputStream outputStream) throws IOException {		
+	// This returns false if there was an error.
+	private static boolean sendFileWithName(String fileName, DataOutputStream outputStream) throws IOException {		
 		Path filePath = Paths.get(fileName);
 		if (Files.exists(filePath) == false) {
 			System.out.println("The file with name " + fileName + " does not exist.");
-			return;
+			return false;
 		}
 
 		// Load the file in memory
@@ -112,11 +112,11 @@ public class Client {
 		// Send the data to the server.
 		outputStream.write(data);
 		outputStream.flush();
+		
+		return true;
 	}
 
-	private static void receiveFileWithName(String fileName, DataInputStream inputStream, DataOutputStream outputStream) throws IOException {
-		System.out.println(fileName);
-		
+	private static void receiveFileWithName(String fileName, DataInputStream inputStream, DataOutputStream outputStream) throws IOException {		
 		// Send the request to the server
 		outputStream.writeUTF("download");
 		outputStream.writeUTF(fileName);
@@ -126,22 +126,25 @@ public class Client {
 		inputStream.read(fileSizeArray);
 
 		// Convert to an integer
-		int fileSize = ByteBuffer.wrap(fileSizeArray).asIntBuffer().get();
+		int length = ByteBuffer.wrap(fileSizeArray).asIntBuffer().get();
 
 		// Create a FileOutputStream and read chunks of 8192 bytes from the socket.
 		Path filePath = Paths.get(fileName);
 		FileOutputStream fos = new FileOutputStream(filePath.toFile());
 
 		byte[] buffer = new byte[8192];
-		int bytesToRead = fileSize;
+		int bytesToRead = length;
 		while (bytesToRead > 0) {
-			int read = inputStream.read(buffer);
+			// Read 8192 bytes or less than that if there is fewer than that left to read.
+			int min = Math.min(bytesToRead, buffer.length);
+			int read = inputStream.read(buffer, 0, min);
 			fos.write(buffer, 0, read);
 			bytesToRead -= read;
 		}
 
 		fos.flush();
 		fos.close();
+		System.out.println("Finished receviing feverything");
 	}
 
 	private static boolean isValidIPv4Address(String IP) {

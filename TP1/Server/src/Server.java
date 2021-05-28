@@ -138,21 +138,24 @@ public class Server {
 				String[] parts = command.split(" ", 2);
 				String directoryStr = parts[1];
 
+				Path newFolder = this.currentPath;
+				
 				// If "..", move to the parent directory using .getParent().
 				if (directoryStr.equals("..")) {
 					Path parentDirectory = this.currentPath.getParent();
 					if (parentDirectory != null)
-						this.currentPath = parentDirectory;
+						newFolder = parentDirectory;
 				} else { // Otherwise, use .resolve to move to a deeper folder.
 					Path directory = Paths.get(directoryStr);
-					Path combinedPath = this.currentPath.resolve(directory);
-					if (combinedPath.toFile().isDirectory())
-						this.currentPath = combinedPath;
-					else
-						outputStream.writeUTF("\"" + combinedPath + "\"" + " is not a valid folder.");
+					newFolder = this.currentPath.resolve(directory);
 				}
 
-				outputStream.writeUTF("Vous êtes dans le dossier " + directoryStr + ".");
+				if (newFolder.toFile().isDirectory()) {
+					this.currentPath = newFolder;
+					outputStream.writeUTF("Vous êtes dans le dossier " + newFolder.toAbsolutePath().toString());
+				} else {
+					outputStream.writeUTF("\"" + newFolder + "\"" + " is not a valid folder.");
+				}
 
 			} else if (command.startsWith("mkdir")) {
 				String[] parts = command.split(" ", 2);
@@ -188,7 +191,9 @@ public class Server {
 				byte[] buffer = new byte[8192];
 				int bytesToRead = fileSize;
 				while (bytesToRead > 0) {
-					int read = inputStream.read(buffer);
+					// Read 8192 bytes or less than that if there is fewer than that left to read.
+					int min = Math.min(bytesToRead, buffer.length);
+					int read = inputStream.read(buffer, 0, min);
 					fos.write(buffer, 0, read);
 					bytesToRead -= read;
 				}
@@ -199,8 +204,9 @@ public class Server {
 				outputStream.writeUTF("Le fichier " + fileName + " a bien été téléversé.");
 			} else if (command.startsWith("download")) {
 				String fileName = inputStream.readUTF();
-				Path filePath = Paths.get(fileName);
-				if (Files.exists(filePath) == false) {
+				Path relativeFilePath = Paths.get(fileName);
+				Path absoluteFilePath = this.currentPath.resolve(relativeFilePath);
+				if (Files.exists(absoluteFilePath) == false) {
 					System.out.println("The file with name " + fileName + " does not exist.");
 					return;
 				}
@@ -208,7 +214,7 @@ public class Server {
 				System.out.println("Sending file named : " + fileName);
 
 				// Load the file in memory
-				byte[] data = Files.readAllBytes(filePath);
+				byte[] data = Files.readAllBytes(absoluteFilePath);
 				
 				// 4 bytes which represents the file size.
 				byte[] fileSize = ByteBuffer.allocate(4).putInt(data.length).array();
@@ -218,7 +224,7 @@ public class Server {
 				
 				// Send the data to the server.
 				outputStream.write(data);				
-				outputStream.flush();
+				//outputStream.flush();
 				
 				outputStream.writeUTF("Le fichier " + fileName + " a bien été téléchargé.");
 			}
