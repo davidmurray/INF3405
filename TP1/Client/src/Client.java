@@ -1,8 +1,13 @@
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.regex.Pattern;
 
 public class Client {
@@ -49,20 +54,26 @@ public class Client {
 		socket = new Socket(serverAddr, port);
 		
 	    // Create input and output streams to read from and write to the server
-        PrintStream out = new PrintStream(socket.getOutputStream());
-		BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+		DataInputStream in = new DataInputStream(socket.getInputStream());
 
 		String command = null;
 		while ((command = sysReader.readLine()) != null) {
+			if (command.startsWith("upload")) {
+				String fileName = command.split(" ", 2)[1];
+				sendFileWithName(fileName, out);
+				continue;
+			}
+			
 			// Send the command to the server.
-			out.println(command);
+			out.writeUTF(command);
 
 			if (command.equals("exit"))
 				break;
 			
 			// Read the server's response.
 			String response = null;
-			while ((response = in.readLine()) != null) {
+			while ((response = in.readUTF()) != null) {
 				if (response.equals("---end---"))
 					break;
 				System.out.println(response);
@@ -72,6 +83,35 @@ public class Client {
 		System.out.println("Vous avez été déconnecté avec succès."); // TODO: check exceptions
 
 		socket.close();
+	}
+	
+	private static void sendFileWithName(String fileName, DataOutputStream outputStream) throws IOException {
+		System.out.println(fileName);
+		
+		Path filePath = Paths.get(fileName);
+		if (Files.exists(filePath) == false) {
+			System.out.println("The file with name " + fileName + " does not exist.");
+			return;
+		}
+
+		// Load the file in memory
+		byte[] data = Files.readAllBytes(filePath);
+		
+		// 4 bytes which represents the file size.
+		byte[] fileSize = ByteBuffer.allocate(4).putInt(data.length).array();
+		
+		outputStream.writeUTF("upload");
+		
+		// Send the file name
+		outputStream.writeUTF(fileName);
+		
+		// Send the data's size
+		outputStream.write(fileSize);
+		
+		// Send the data to the server.
+		outputStream.write(data);
+		
+		outputStream.flush();
 	}
 
 	private static boolean isValidIPv4Address(String IP) {
