@@ -80,7 +80,6 @@ public class Server {
 			this.socket = socket;
 			this.clientNumber = clientNumber;
 			this.currentPath = Paths.get("").toAbsolutePath();
-			System.out.println(this.currentPath);
 
 			System.out.println("New connection with client #" + clientNumber + " at " + socket);
 		}
@@ -92,7 +91,7 @@ public class Server {
 
 				String inputCommand = null;
 				while ((inputCommand = in.readUTF()) != null) {
-					System.out.println("Got command: " + inputCommand);
+					System.out.println("Received command: " + inputCommand);
 
 					if (inputCommand.equals("exit"))
 						break;
@@ -118,7 +117,7 @@ public class Server {
 			if (command.equals("ls")) {
 				File folder = new File(this.currentPath.toString());
 				File[] files = folder.listFiles();
-
+				// Send the list of files and folders one by one.
 				for (int i = 0; i < files.length; i++) {
 					if (files[i].isFile()) {
 						outputStream.writeUTF("[File] " + files[i].getName());
@@ -130,11 +129,12 @@ public class Server {
 				String[] parts = command.split(" ", 2);
 				String directoryStr = parts[1];
 
+				// If "..", move to the parent directory using .getParent().
 				if (directoryStr.equals("..")) {
 					Path parentDirectory = this.currentPath.getParent();
 					if (parentDirectory != null)
 						this.currentPath = parentDirectory;
-				} else {
+				} else { // Otherwise, use .resolve to move to a deeper folder.
 					Path directory = Paths.get(directoryStr);
 					Path combinedPath = this.currentPath.resolve(directory);
 					if (combinedPath.toFile().isDirectory())
@@ -152,6 +152,7 @@ public class Server {
 					Path directory = Paths.get(directoryStr);
 					Path combinedPath = this.currentPath.resolve(directory);
 
+					// Check if the folder already exists before creating it
 					File file = combinedPath.toFile();
 					if (file.isDirectory()) {
 						outputStream.writeUTF("Le dossier " + directoryStr + " existe déjà.");
@@ -162,6 +163,7 @@ public class Server {
 				}
 			} else if (command.startsWith("upload")) {
 				String fileName = inputStream.readUTF();
+				System.out.println("Receiving file named : " + fileName);
 
 				// Read the file size
 				byte[] fileSizeArray = new byte[4];
@@ -191,6 +193,8 @@ public class Server {
 					System.out.println("The file with name " + fileName + " does not exist.");
 					return;
 				}
+				
+				System.out.println("Sending file named : " + fileName);
 
 				// Load the file in memory
 				byte[] data = Files.readAllBytes(filePath);
@@ -206,6 +210,7 @@ public class Server {
 				outputStream.flush();
 			}
 
+			// Send a marker to indicate the end of a message.
 			outputStream.writeUTF("---end---");
 		}
 	}

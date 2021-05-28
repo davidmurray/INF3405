@@ -16,8 +16,6 @@ public class Client {
 	private static Socket socket;
 
 	public static void main(String[] args) throws Exception {
-		System.out.println("Client start!");
-
 		BufferedReader sysReader = new BufferedReader(new InputStreamReader(System.in));
 
 		String serverAddr = "127.0.0.1";
@@ -60,6 +58,7 @@ public class Client {
 
 		String command = null;
 		while ((command = sysReader.readLine()) != null) {
+			// The "upload" and "download" commands are special so we handle them differently.
 			if (command.startsWith("upload")) {
 				String fileName = command.split(" ", 2)[1];
 				sendFileWithName(fileName, out);
@@ -76,7 +75,7 @@ public class Client {
 			if (command.equals("exit"))
 				break;
 			
-			// Read the server's response.
+			// Read the server's response until we see "---end---".
 			String response = null;
 			while ((response = in.readUTF()) != null) {
 				if (response.equals("---end---"))
@@ -84,10 +83,9 @@ public class Client {
 				System.out.println(response);
 			}
 		}
-		
-		System.out.println("Vous avez été déconnecté avec succès."); // TODO: check exceptions
 
 		socket.close();
+		System.out.println("Vous avez été déconnecté avec succès."); // TODO: check exceptions
 	}
 	
 	private static void sendFileWithName(String fileName, DataOutputStream outputStream) throws IOException {		
