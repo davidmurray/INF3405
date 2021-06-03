@@ -39,7 +39,7 @@ public class Client {
 
 			if (!isValidPort(port)) {
 				System.out.println(
-						"The port number you have entered is not a valid (must be between 5000 and 5050). Please try again. ");
+						"The port number you have entered is not a valid port number (must be between 5000 and 5050). Please try again. ");
 				continue;
 			} else {
 				break;
@@ -84,7 +84,7 @@ public class Client {
 		}
 
 		socket.close();
-		System.out.println("Vous avez été déconnecté avec succès."); // TODO: check exceptions
+		System.out.println("Vous avez Ã©tÃ© dÃ©connectÃ© avec succÃ¨s."); // TODO: check exceptions
 	}
 	
 	// This returns false if there was an error.
