@@ -45,7 +45,7 @@ public class Server {
 
 			if (!isValidPort(serverPort)) {
 				System.out.println(
-						"The port number you have entered is not a valid (must be between 5000 and 5050). Please try again. ");
+						"The port number you have entered is not a valid port number (must be between 5000 and 5050). Please try again. ");
 				continue;
 			} else {
 				break;
@@ -153,7 +153,7 @@ public class Server {
 
 				if (newFolder.toFile().isDirectory()) {
 					this.currentPath = newFolder;
-					outputStream.writeUTF("Vous êtes dans le dossier " + newFolder.toAbsolutePath().toString());
+					outputStream.writeUTF("Vous Ãªtes dans le dossier " + newFolder.toAbsolutePath().toString());
 				} else {
 					outputStream.writeUTF("\"" + newFolder + "\"" + " is not a valid folder.");
 				}
@@ -168,10 +168,10 @@ public class Server {
 					// Check if the folder already exists before creating it
 					File file = combinedPath.toFile();
 					if (file.isDirectory()) {
-						outputStream.writeUTF("Le dossier " + directoryStr + " existe déjà.");
+						outputStream.writeUTF("Le dossier " + directoryStr + " existe dÃ©jÃ .");
 					} else {
 						file.mkdirs();
-						outputStream.writeUTF("Le dossier " + directoryStr + " a été créé.");
+						outputStream.writeUTF("Le dossier " + directoryStr + " a Ã©tÃ© crÃ©Ã©.");
 					}
 				}
 			} else if (command.startsWith("upload")) {
@@ -198,7 +198,7 @@ public class Server {
 				fos.flush();
 				fos.close();
 				
-				outputStream.writeUTF("Le fichier " + fileName + " a bien été téléversé.");
+				outputStream.writeUTF("Le fichier " + fileName + " a bien Ã©tÃ© tÃ©lÃ©versÃ©.");
 			} else if (command.startsWith("download")) {
 				String fileName = inputStream.readUTF();
 				Path relativeFilePath = Paths.get(fileName);
@@ -220,7 +220,7 @@ public class Server {
 				outputStream.write(data);				
 				outputStream.flush();
 				
-				outputStream.writeUTF("Le fichier " + fileName + " a bien été téléchargé.");
+				outputStream.writeUTF("Le fichier " + fileName + " a bien Ã©tÃ© tÃ©lÃ©chargÃ©.");
 			}
 
 			// Send a marker to indicate the end of a message.
