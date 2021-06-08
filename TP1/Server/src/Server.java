@@ -90,6 +90,7 @@ public class Server {
 			this.currentPath = Paths.get("").toAbsolutePath();
 
 			System.out.println("New connection with client #" + clientNumber + " at " + socket);
+			System.out.println("Dossier actuel: " + this.currentPath);
 		}
 
 		public void run() {

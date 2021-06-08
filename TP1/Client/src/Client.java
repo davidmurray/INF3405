@@ -51,6 +51,7 @@ public class Client {
 		
 		while (socket.isConnected() == false) { ;; }
 		System.out.println("connected!");
+		System.out.println("Dossier actuel: " + Paths.get("").toAbsolutePath());
 		
 	    // Create input and output streams to read from and write to the server
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
